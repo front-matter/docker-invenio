@@ -43,7 +43,7 @@ jobs:
       - uses: haya14busa/action-cond@v1
         id: almalinux-image
         with:
-          cond: ${{ env.USE_CERN_REGISTRY }}
+          cond: ${{ env.CERN_REGISTRY_USERNAME != '' }}
           if_true: "registry.cern.ch/${{ github.repository_owner }}/almalinux"
           if_false: "ghcr.io/${{ github.repository_owner }}/almalinux"
 
@@ -134,7 +134,7 @@ jobs:
       - uses: haya14busa/action-cond@v1
         id: centos7-image
         with:
-          cond: ${{ env.USE_CERN_REGISTRY }}
+          cond: ${{ env.CERN_REGISTRY_USERNAME != '' }}
           if_true: "registry.cern.ch/${{ github.repository_owner }}/centos7-python"
           if_false: "ghcr.io/${{ github.repository_owner }}/centos7-python"
       - name: Publish ${{ matrix.name }}
