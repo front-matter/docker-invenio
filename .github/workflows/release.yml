@@ -18,7 +18,7 @@ on:
 
 env:
   CERN_REGISTRY_USERNAME: '${{ secrets.CERN_REGISTRY_USERNAME }}'
-  REGISTRY: ${{ secrets.CERN_REGISTRY_USERNAME != '' && 'registry.cern.ch if true' || 'ghcr.io if false' }}
+  REGISTRY: ${{ secrets.CERN_REGISTRY_USERNAME != '' && 'registry.cern.ch' || 'ghcr.io' }}
 
 jobs:
   almalinux:
