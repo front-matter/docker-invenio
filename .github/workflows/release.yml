@@ -51,8 +51,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v4
         with:
-          images: |
-            {{ steps.almalinux-image.outputs.value }}
+          images: '{{ steps.almalinux-image.outputs.value }}'
           tags: |
             type=semver,pattern={{major}}
             type=semver,pattern={{major}}.{{minor}}
