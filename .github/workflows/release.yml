@@ -17,7 +17,7 @@ on:
         default: "Manual trigger"
 
 env:
-  USE_CERN_REGISTRY: ${{ secrets.CERN_REGISTRY_USERNAME != '' }}
+  USE_CERN_REGISTRY: '${{ secrets.CERN_REGISTRY_USERNAME != '' }}'
 
 jobs:
   almalinux:
