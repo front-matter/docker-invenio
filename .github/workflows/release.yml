@@ -1,57 +1,111 @@
 name: Release
+
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - v*
+
+  schedule:
+    #- cron:  '0 0 * * MON'  # every Monday at midnight
+    - cron: '0 0 * * 1-5'  # TESTING: every weekday at midnight
+
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason'
+        required: false
+        default: 'Manual trigger'
+
 jobs:
-  build:
+
+  almalinux:
+    name: Publish AlmaLinux
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
-        uses: actions/checkout@v3.1.0
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2.1.0
-      - name: Generate Docker metadata
+        uses: actions/checkout@v3
+
+      # ensure that crons are not suspended after 60 days
+      - name: Keepalive check
+        uses: gautamkrishnar/keepalive-workflow@v1
+
+      # https://github.com/docker/metadata-action
+      # Tags:
+      #   type=semver,pattern=...: on tag pushed, with a valid `semver`, the new image
+      #     will have tags `x`, `x.y`, `x.y.z`. Pre-release GIT tag will tag image
+      #     with only pre-release tag, e.g. `x.y.z-beta.67`, and not the others
+      # Flavor:
+      #    `latest` will tag the image with `latest`
+      - name: Extract GIT metadata for Docker
         id: meta
         uses: docker/metadata-action@v4
         with:
-          images: ghcr.io/${{ github.repository_owner }}/almalinux
+          images: registry.cern.ch/${{ github.repository_owner }}/almalinux
           tags: |
-            type=ref,event=branch
+            type=semver,pattern={{major}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}.{{minor}}.{{patch}}
             type=semver,pattern={{version}}
+            type=schedule,pattern={{date 'YYYYMMDD'}}
           flavor: |
             latest=true
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2.1.0 
+
+      # needed to build multi-platform images
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to CERN registry
+        uses: docker/login-action@v2
         with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build and export to Docker
+          registry: registry.cern.ch
+          username: ${{ secrets.CERN_REGISTRY_USERNAME }}
+          password: ${{ secrets.CERN_REGISTRY_PASSWORD }}
+
+      - name: Publish AlmaLinux
         uses: docker/build-push-action@v3
         with:
-          context: ./python3.9/almalinux9/
-          file: ./python3.9/almalinux9/Dockerfile
-          platforms: linux/amd64
-          load: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: 'ghcr.io/${{ github.repository_owner }}/almalinux:${{ steps.meta.outputs.tags }}'
-          format: 'table'
-          exit-code: '1'
-          ignore-unfixed: true
-          vuln-type: 'os,library'
-          severity: 'CRITICAL,HIGH'
-      - name: Push to GitHub Packages
-        uses: docker/build-push-action@v3.2.0
-        with:
-          context: ./python3.9/almalinux9/
-          file: ./python3.9/almalinux9/Dockerfile
+          context: ./almalinux/
+          file: ./almalinux/Dockerfile
           # support images for Intel and Apple Silicon processors
           platforms: linux/amd64, linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          
+
+  # CentOS 7 is kept, with one tag only, because previously used in Invenio.
+  centos7:
+    name: Publish CentOS
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        include:
+          - name: CentOS 7 Python 3.6
+            context: ./centos7/python3.6/
+            file: ./centos7/python3.6/Dockerfile
+            tag: 3.6
+
+          - name: CentOS 7 Python 3.9
+            context: ./centos7/python3.9/
+            file: ./centos7/python3.9/Dockerfile
+            tag: 3.9
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Log in to CERN registry
+        uses: docker/login-action@v2
+        with:
+          registry: registry.cern.ch
+          username: ${{ secrets.CERN_REGISTRY_USERNAME }}
+          password: ${{ secrets.CERN_REGISTRY_PASSWORD }}
+
+      - name: Publish ${{ matrix.name }}
+        uses: docker/build-push-action@v3
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.file }}
+          push: true
+          tags: registry.cern.ch/${{ github.repository_owner }}/centos7-python:${{ matrix.tag }}

@@ -7,6 +7,7 @@
 # under the terms of the MIT License; see LICENSE file for more details.
 #
 ARG LINUX_VERSION=9.0
+ARG BUILDPLATFORM=linux/amd64
 FROM --platform=$BUILDPLATFORM almalinux:${LINUX_VERSION}
 
 RUN dnf upgrade --refresh -y && \
@@ -17,8 +18,7 @@ RUN dnf upgrade --refresh -y && \
         glibc-locale-source \
         glibc-langpack-en
 
-RUN localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8 && \
-    ln -s /usr/bin/python3 /usr/bin/python
+RUN localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
 
 ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
@@ -45,22 +45,15 @@ RUN dnf groupinstall -y "Development Tools" && \
         sqlite-devel \
         xmlsec1-devel
 
-# install nodejs version 14, nvm.sh adds functions to shell, bash -ic loads .profile first, so functions are available
-RUN curl https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash && \
-    export NVM_DIR="$HOME/.nvm" && \
-    chmod u+x $NVM_DIR/nvm.sh && \
-    bash -ic '$NVM_DIR/nvm.sh' && \
-    bash -ic 'nvm install 14.20.0'
-
-# Symlink python
+# Symlink Python
 RUN ln -sfn /usr/bin/python3 /usr/bin/python
+# `python3-packaging` is installed by `yum` and it causes issues with `pip` installations
+RUN yum remove python3-packaging -y
+RUN pip3 install --upgrade pip pipenv wheel
 
-# Remove 'packaging' as it's coming from an rpm and can't be updated by pipenv
-RUN rm -rf /usr/lib/python3.9/site-packages/packaging /usr/lib/python3.9/site-packages/packaging-20.9.dist-info
-
-# setuptools v58 removed 2to3 support: https://setuptools.pypa.io/en/latest/history.html#v58-0-0
-# the `fs` package relies on `2to3`
-RUN pip install --upgrade pip pipenv "setuptools<58" wheel
+# Install Node.js v16
+RUN curl -fsSL https://rpm.nodesource.com/setup_16.x | bash - && \
+    yum install -y nodejs
 
 # Create working directory
 ENV WORKING_DIR=/opt/invenio
@@ -74,15 +67,9 @@ RUN mkdir -p ${INVENIO_INSTANCE_PATH} && \
 RUN mkdir -p ${WORKING_DIR}/src
 WORKDIR ${WORKING_DIR}/src
 
-# As we installed node and npm via nvm, no npm prefix is needed
-
 # Set folder permissions
 ENV INVENIO_USER_ID=1000
 RUN chgrp -R 0 ${WORKING_DIR} && \
     chmod -R g=u ${WORKING_DIR}
 RUN useradd invenio --uid ${INVENIO_USER_ID} --gid 0 && \
     chown -R invenio:root ${WORKING_DIR}
-
-ENV PATH=/root/.nvm/versions/node/v14.20.0/bin:$PATH
-
-
