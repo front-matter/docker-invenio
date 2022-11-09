@@ -140,4 +140,4 @@ jobs:
           context: ${{ matrix.context }}
           file: ${{ matrix.file }}
           push: true
-          tags: "${{ steps.centos7-image.outputs.value }}:${{ matrix.tag }}
+          tags: "${{ steps.centos7-image.outputs.value }}:${{ matrix.tag }}"
