@@ -29,6 +29,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: Run Trivy vulnerability scanner in repo mode
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          ignore-unfixed: true
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results.sarif'
+
       # ensure that crons are not suspended after 60 days
       - name: Keepalive check
         uses: gautamkrishnar/keepalive-workflow@v1
@@ -75,27 +89,6 @@ jobs:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build AlmaLinux
-        uses: docker/build-push-action@v3
-        with:
-          context: ./almalinux/
-          file: ./almalinux/Dockerfile
-          # support images for Intel and Apple Silicon processors
-          platforms: linux/amd64
-          load: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: '${{ steps.meta.outputs.tags }}'
-          format: 'table'
-          exit-code: '1'
-          ignore-unfixed: true
-          vuln-type: 'os,library'
-          severity: 'CRITICAL,HIGH'
 
       - name: Publish AlmaLinux
         uses: docker/build-push-action@v3
