@@ -33,6 +33,13 @@ jobs:
         run: |
           docker build -t ghcr.io/${{ github.repository_owner }}/almalinux:${{ github.sha }} ./almalinux/
 
+      - name: Run Trivy vulnerability scanner in fs mode
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          trivy-config: trivy.yml
+
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
