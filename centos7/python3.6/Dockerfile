@@ -75,7 +75,7 @@ RUN mkdir ${INVENIO_INSTANCE_PATH}/.npm-global
 ENV NPM_CONFIG_PREFIX=$INVENIO_INSTANCE_PATH/.npm-global
 RUN mkdir npm_install
 WORKDIR ${WORKING_DIR}/src/npm_install
-RUN curl -SsL https://registry.npmjs.org/npm/-/npm-6.14.5.tgz | tar -xzf - && \
+RUN curl -SsL https://registry.npmjs.org/npm/-/npm-6.14.5.tgz | tar -xzf
 WORKDIR ${WORKING_DIR}/src/npm_install/package
 RUN node bin/npm-cli.js rm npm -g && \
     node bin/npm-cli.js install -g $(node bin/npm-cli.js pack | tail -1)
