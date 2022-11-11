@@ -86,20 +86,10 @@ RUN mkdir ${INVENIO_INSTANCE_PATH}/static
 RUN mkdir -p ${WORKING_DIR}/src
 WORKDIR ${WORKING_DIR}/src
 
-# Set `npm` global under Invenio instance path
-RUN mkdir ${INVENIO_INSTANCE_PATH}/.npm-global
-ENV NPM_CONFIG_PREFIX=$INVENIO_INSTANCE_PATH/.npm-global
-RUN mkdir npm_install
-WORKDIR ${WORKING_DIR}/src/npm_install
-RUN curl -SsL https://registry.npmjs.org/npm/-/npm-6.14.5.tgz | tar -xzf
-WORKDIR ${WORKING_DIR}/src/npm_install/package
-RUN node bin/npm-cli.js rm npm -g && \
-    node bin/npm-cli.js install -g $(node bin/npm-cli.js pack | tail -1)
-WORKDIR ${WORKING_DIR}/src   
-RUN rm -rf npm_install
-
-RUN npm config set prefix '${INVENIO_INSTANCE_PATH}/.npm-global'
-ENV PATH=${INVENIO_INSTANCE_PATH}/.npm-global/bin:$PATH
+# Install Node.js v14
+RUN curl -fsSL https://rpm.nodesource.com/setup_14.x | bash - && \
+    yum install -y nodejs && \
+    yum clean all
 
 # Set folder permissions
 ENV INVENIO_USER_ID=1000
