@@ -40,7 +40,7 @@ RUN yum install -y \
         yum clean all
 
 # install python3.9
-RUN curl https://www.python.org/ftp/python/3.9.7/Python-3.9.7.tgz && tar xzf Python-3.9.7.tgz
+RUN curl -O https://www.python.org/ftp/python/3.9.7/Python-3.9.7.tgz && tar xzf Python-3.9.7.tgz
 WORKDIR /usr/src/Python-3.9.7
 RUN ./configure --prefix=/usr --enable-loadable-sqlite-extensions -enable-optimizations && make altinstall
 
