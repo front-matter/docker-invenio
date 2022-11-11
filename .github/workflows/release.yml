@@ -88,8 +88,8 @@ jobs:
             ${{ env.REGISTRY }}/${{ github.repository_owner }}/almalinux
           tags: |
             # type=semver,pattern={{major}}
-            # type=semver,pattern={{major}}.{{minor}}
-            # type=semver,pattern={{major}}.{{minor}}.{{patch}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}.{{minor}}.{{patch}}
             # type=semver,pattern={{version}}
             # type=schedule,pattern={{date 'YYYYMMDD'}}
           flavor: |
