@@ -21,8 +21,10 @@ RUN yum install -y \
         vim \
         wget \
         emacs-nox && \
+    yum clean all && \
     yum install -y \
         epel-release && \
+    yum clean all && \
     yum groupinstall -y "Development Tools" && \
     yum install -y \
         cairo-devel \
@@ -34,17 +36,18 @@ RUN yum install -y \
         openssl-devel \
 	    bzip2-devel \
 	    xz-devel \
-        sqlite-devel
-
-RUN yum clean -y all
+        sqlite-devel && \
+        yum clean all
 
 # install python3.9
-RUN wget https://www.python.org/ftp/python/3.9.7/Python-3.9.7.tgz && tar xzf Python-3.9.7.tgz
-RUN cd Python-3.9.7 && ./configure --prefix=/usr --enable-loadable-sqlite-extensions -enable-optimizations && make altinstall
+RUN curl https://www.python.org/ftp/python/3.9.7/Python-3.9.7.tgz && tar xzf Python-3.9.7.tgz
+WORKDIR /usr/src/Python-3.9.7
+RUN ./configure --prefix=/usr --enable-loadable-sqlite-extensions -enable-optimizations && make altinstall
 
 # # install nodejs version 14
 RUN curl -sL https://rpm.nodesource.com/setup_14.x | bash - && \
-    yum install -y nodejs
+    yum install -y nodejs && \
+    yum clean all
 
 # setuptools v58 removed 2to3 support: https://setuptools.pypa.io/en/latest/history.html#v58-0-0
 # the `fs` package relies on `2to3`
@@ -70,12 +73,14 @@ WORKDIR ${WORKING_DIR}/src
 # Set `npm` global under Invenio instance path
 RUN mkdir ${INVENIO_INSTANCE_PATH}/.npm-global
 ENV NPM_CONFIG_PREFIX=$INVENIO_INSTANCE_PATH/.npm-global
-RUN mkdir npm_install && cd npm_install && \
-    curl -SsL https://registry.npmjs.org/npm/-/npm-6.14.5.tgz | tar -xzf - && \
-    cd package && \
-    node bin/npm-cli.js rm npm -g && \
+RUN mkdir npm_install
+WORKDIR ${WORKING_DIR}/src/npm_install
+RUN curl -SsL https://registry.npmjs.org/npm/-/npm-6.14.5.tgz | tar -xzf
+WORKDIR ${WORKING_DIR}/src/npm_install/package
+RUN node bin/npm-cli.js rm npm -g && \
     node bin/npm-cli.js install -g $(node bin/npm-cli.js pack | tail -1) && \
-    cd ../.. && rm -rf npm_install
+WORKDIR ${WORKING_DIR}/src 
+RUN rm -rf npm_install
 
 RUN npm config set prefix '${INVENIO_INSTANCE_PATH}/.npm-global'
 ENV PATH=${INVENIO_INSTANCE_PATH}/.npm-global/bin:$PATH
@@ -86,3 +91,5 @@ RUN chgrp -R 0 ${WORKING_DIR} && \
     chmod -R g=u ${WORKING_DIR}
 RUN useradd invenio --uid ${INVENIO_USER_ID} --gid 0 && \
     chown -R invenio:root ${WORKING_DIR}
+
+USER invenio

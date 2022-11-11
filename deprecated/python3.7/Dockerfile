@@ -11,7 +11,8 @@ FROM centos:${CENTOS_VERSION}
 
 # set the locale
 # avoid Failed to set locale, defaulting to C.UTF-8
-RUN yum install -y glibc-locale-source
+RUN yum install -y glibc-locale-source && \
+    yum clean all
 RUN localedef --quiet -c -i en_US -f UTF-8 en_US.UTF-8
 ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
@@ -26,6 +27,7 @@ RUN yum install -y \
         vim \
         gcc \
         emacs-nox && \
+    yum clean all && \
     yum install -y \
         epel-release && \
     yum groupinstall -y "Development Tools" && \
@@ -36,13 +38,13 @@ RUN yum install -y \
         libxml2-devel \
         libxslt-devel \
         openssl-devel \
-        ImageMagick
-
-RUN yum clean -y all
+        ImageMagick && \
+        yum clean all
 
 # install nodejs version 14
 RUN curl -sL https://rpm.nodesource.com/setup_14.x | bash - && \
-    yum install -y nodejs
+    yum install -y nodejs && \
+    yum clean all
 
 # Download and install Python 3.7
 # Need to remove symlink from /usr/bin/python3 -> /usr/bin/python3.6
@@ -87,12 +89,14 @@ WORKDIR ${WORKING_DIR}/src
 # Set `npm` global under Invenio instance path
 RUN mkdir ${INVENIO_INSTANCE_PATH}/.npm-global
 ENV NPM_CONFIG_PREFIX=$INVENIO_INSTANCE_PATH/.npm-global
-RUN mkdir npm_install && cd npm_install && \
-    curl -SsL https://registry.npmjs.org/npm/-/npm-6.14.5.tgz | tar -xzf - && \
-    cd package && \
-    node bin/npm-cli.js rm npm -g && \
-    node bin/npm-cli.js install -g $(node bin/npm-cli.js pack | tail -1) && \
-    cd ../.. && rm -rf npm_install
+RUN mkdir npm_install
+WORKDIR ${WORKING_DIR}/src/npm_install
+RUN curl -SsL https://registry.npmjs.org/npm/-/npm-6.14.5.tgz | tar -xzf
+WORKDIR ${WORKING_DIR}/src/npm_install/package
+RUN node bin/npm-cli.js rm npm -g && \
+    node bin/npm-cli.js install -g $(node bin/npm-cli.js pack | tail -1)
+WORKDIR ${WORKING_DIR}/src   
+RUN rm -rf npm_install
 
 RUN npm config set prefix '${INVENIO_INSTANCE_PATH}/.npm-global'
 ENV PATH=${INVENIO_INSTANCE_PATH}/.npm-global/bin:$PATH
@@ -103,3 +107,5 @@ RUN chgrp -R 0 ${WORKING_DIR} && \
     chmod -R g=u ${WORKING_DIR}
 RUN useradd invenio --uid ${INVENIO_USER_ID} --gid 0 && \
     chown -R invenio:root ${WORKING_DIR}
+
+USER invenio

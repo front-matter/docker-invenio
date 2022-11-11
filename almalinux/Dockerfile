@@ -16,7 +16,8 @@ RUN dnf upgrade --refresh -y && \
         git \
         glibc-common \
         glibc-locale-source \
-        glibc-langpack-en
+        glibc-langpack-en && \
+    dnf clean all
 
 RUN localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
 
@@ -27,7 +28,8 @@ ENV LC_ALL en_US.UTF-8
 # crb is needed to install epel, epel contains ImageMagick
 RUN dnf config-manager --set-enabled crb && \
     dnf install -y \
-        https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
+        https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm && \
+    dnf clean all
 
 RUN dnf groupinstall -y "Development Tools" && \
     dnf install -y \
@@ -43,7 +45,8 @@ RUN dnf groupinstall -y "Development Tools" && \
         bzip2-devel \
         xz-devel \
         sqlite-devel \
-        xmlsec1-devel
+        xmlsec1-devel && \
+    dnf clean all
 
 # Symlink Python
 RUN ln -sfn /usr/bin/python3 /usr/bin/python
@@ -53,7 +56,8 @@ RUN pip3 install --upgrade pip pipenv wheel
 
 # Install Node.js v16
 RUN curl -fsSL https://rpm.nodesource.com/setup_16.x | bash - && \
-    yum install -y nodejs
+    yum install -y nodejs && \
+    yum clean all
 
 # Create working directory
 ENV WORKING_DIR=/opt/invenio
@@ -67,9 +71,13 @@ RUN mkdir -p ${INVENIO_INSTANCE_PATH} && \
 RUN mkdir -p ${WORKING_DIR}/src
 WORKDIR ${WORKING_DIR}/src
 
-# Set folder permissions
+# Create user
 ENV INVENIO_USER_ID=1000
+RUN useradd invenio --uid ${INVENIO_USER_ID} --gid 0
+
+# Set folder permissions
 RUN chgrp -R 0 ${WORKING_DIR} && \
-    chmod -R g=u ${WORKING_DIR}
-RUN useradd invenio --uid ${INVENIO_USER_ID} --gid 0 && \
+    chmod -R g=u ${WORKING_DIR} && \
     chown -R invenio:root ${WORKING_DIR}
+
+USER invenio
