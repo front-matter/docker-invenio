@@ -17,7 +17,6 @@ on:
         default: "Manual trigger"
 
 env:
-  CERN_REGISTRY_USERNAME: '${{ secrets.CERN_REGISTRY_USERNAME }}'
   REGISTRY: ${{ secrets.CERN_REGISTRY_USERNAME != '' && 'registry.cern.ch' || 'ghcr.io' }}
 
 jobs:
