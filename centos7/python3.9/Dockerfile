@@ -39,19 +39,18 @@ RUN yum install -y \
         sqlite-devel && \
         yum clean all
 
-# install python3.9
+# # install nodejs version 14
+RUN curl -sL https://rpm.nodesource.com/setup_14.x | bash - && \
+    yum install -y nodejs && \
+    yum clean all
 
+# install python3.9
 RUN curl -O https://www.python.org/ftp/python/3.9.7/Python-3.9.7.tgz && tar xzf Python-3.9.7.tgz
 WORKDIR /Python-3.9.7
 RUN ./configure --prefix=/usr --enable-loadable-sqlite-extensions -enable-optimizations && \
     make altinstall
 WORKDIR /
 RUN rm -rf Python-3.9.7.tgz
-
-# # install nodejs version 14
-RUN curl -sL https://rpm.nodesource.com/setup_14.x | bash - && \
-    yum install -y nodejs && \
-    yum clean all
 
 # setuptools v58 removed 2to3 support: https://setuptools.pypa.io/en/latest/history.html#v58-0-0
 # the `fs` package relies on `2to3`
@@ -74,11 +73,6 @@ RUN mkdir ${INVENIO_INSTANCE_PATH}/static
 RUN mkdir -p ${WORKING_DIR}/src
 WORKDIR ${WORKING_DIR}/src
 
-# Install Node.js v14
-RUN curl -fsSL https://rpm.nodesource.com/setup_14.x | bash - && \
-    yum install -y nodejs && \
-    yum clean all
-    
 # Set folder permissions
 ENV INVENIO_USER_ID=1000
 RUN chgrp -R 0 ${WORKING_DIR} && \
