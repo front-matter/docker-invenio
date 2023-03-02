@@ -7,7 +7,7 @@ on:
 
   schedule:
     #- cron:  '0 0 * * MON'  # every Monday at midnight
-    - cron: "0 0 * * 1-5" # TESTING: every weekday at midnight
+    - cron: '0 0 * * 1-5'  # TESTING: every weekday at midnight
 
   workflow_dispatch:
     inputs:
