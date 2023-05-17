@@ -12,11 +12,11 @@ FROM --platform=$BUILDPLATFORM almalinux:${LINUX_VERSION}
 
 RUN dnf upgrade --refresh -y && \
     dnf install -y \
-        dnf-plugins-core \
-        git \
-        glibc-common \
-        glibc-locale-source \
-        glibc-langpack-en && \
+    dnf-plugins-core \
+    git \
+    glibc-common \
+    glibc-locale-source \
+    glibc-langpack-en && \
     dnf clean all
 
 RUN localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
@@ -28,25 +28,25 @@ ENV LC_ALL en_US.UTF-8
 # crb is needed to install epel, epel contains ImageMagick
 RUN dnf config-manager --set-enabled crb && \
     dnf install -y \
-        https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm && \
+    https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm && \
     dnf clean all
 
 RUN dnf groupinstall -y "Development Tools" && \
     dnf install -y \
-        pip \
-        python3-devel \
-        cairo-devel \
-        dejavu-sans-fonts \
-        libffi-devel \
-        libpq-devel \
-        libxml2-devel \
-        libxslt-devel \
-        ImageMagick \
-        openssl-devel \
-        bzip2-devel \
-        xz-devel \
-        sqlite-devel \
-        xmlsec1-devel && \
+    pip \
+    python3-devel \
+    cairo-devel \
+    dejavu-sans-fonts \
+    libffi-devel \
+    libpq-devel \
+    libxml2-devel \
+    libxslt-devel \
+    ImageMagick \
+    openssl-devel \
+    bzip2-devel \
+    xz-devel \
+    sqlite-devel \
+    xmlsec1-devel && \
     dnf clean all
 
 # Symlink Python
