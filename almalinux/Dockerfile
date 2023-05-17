@@ -55,8 +55,8 @@ RUN ln -sfn /usr/bin/python3 /usr/bin/python
 RUN yum remove python3-packaging -y
 RUN pip3 install --upgrade pip pipenv wheel
 
-# Install Node.js v16
-RUN curl -fsSL https://rpm.nodesource.com/setup_16.x | bash - && \
+# Install Node.js v18
+RUN curl -fsSL https://rpm.nodesource.com/setup_18.x | bash - && \
     yum install -y nodejs && \
     yum clean all
 
